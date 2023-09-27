@@ -12,6 +12,7 @@ let USERS = [];
 let COURSES = [];
 
 // Read data from file, or initialize to empty array if file does not exist
+// NOTE: make sure that you have 'admins.json', 'users.json', 'courses.json' inside your root directory, if not available then create by singup admin, signup user, add course.
 try {
   ADMINS = JSON.parse(fs.readFileSync("admins.json", "utf8"));
   USERS = JSON.parse(fs.readFileSync("users.json", "utf8"));
@@ -41,6 +42,13 @@ const authenticateJwt = (req, res, next) => {
   }
 };
 
+// get the user-info
+app.get("/admin/me", authenticateJwt, (req, res) => {
+  res.json({
+    username: req.user.username
+  })
+})
+
 // Admin routes
 app.post("/admin/signup", (req, res) => {
   const { username, password } = req.body;
@@ -57,7 +65,7 @@ app.post("/admin/signup", (req, res) => {
     ADMINS.push(newAdmin);
     fs.writeFileSync("admins.json", JSON.stringify(ADMINS));
     const token = jwt.sign({ username, role: "admin" }, SECRET, {
-      expiresIn: "1h",
+      expiresIn: "1D",
     });
     
     res.json({ message: "Admin created successfully", token });
@@ -83,7 +91,6 @@ app.post("/admin/login", (req, res) => {
 app.post("/admin/courses", authenticateJwt, (req, res) => {
   const course = req.body;
   course.id = COURSES.length + 1;
-  console.log("Length: ", COURSES.length, "Course: ", course);
   COURSES.push(course);
   fs.writeFileSync('courses.json', JSON.stringify(COURSES));
   res.json({ message: 'Course created successfully', courseId: course.id });
